@@ -20,6 +20,27 @@ that browser explicitly, run:
 .\.venv\Scripts\python.exe -m playwright install chromium
 ```
 
+## Chrome DevTools MCP in Codex (Windows)
+
+The project-local `.codex/config.toml` configures Chrome DevTools MCP for
+Codex. It needs Node.js, `pnpm`, and Google Chrome installed and available on
+this machine. Codex loads project configuration only for a trusted project;
+after opening or trusting this repository, start a new Codex task so the MCP
+tools can be discovered. No global Codex configuration or Python test
+dependency is needed.
+
+The server starts Chrome headlessly with a temporary isolated profile. Usage
+statistics, CrUX performance data, and update checks are disabled. The
+configuration does not connect to an existing Chrome session or personal
+profile. `pnpm dlx` fetches the pinned MCP package into pnpm's cache on first
+use; it does not add a dependency to this project. The first run may need
+network access for that fetch.
+
+For a quick check, ask a new Codex task in this trusted repository to use
+Chrome DevTools MCP to inspect a page served only on
+`http://127.0.0.1:<port>`. Keep inspection on local test pages; the MCP server
+does not need access to external sites for these lessons.
+
 ## Run the tests
 
 ```powershell
