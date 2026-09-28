@@ -1,8 +1,8 @@
 # Playwright UI Tests
 
 Minimal local-only UI tests for learning Playwright locators and auto-waiting.
-The HTML is loaded with `page.set_content`, so the tests do not use a website or
-make network requests.
+Most pages use `page.set_content` or mocked requests. One integration test uses
+a temporary fake HTTP server on `127.0.0.1`; no external website is contacted.
 
 ## Install
 
@@ -35,8 +35,7 @@ installs `requirements.txt`, installs Playwright Chromium, and runs
 
 If the test step fails, GitHub Actions uploads `test-results/` with the saved
 screenshot and trace. If the directory has no files, that upload does not fail
-the job. This workflow has not run remotely yet: a future push or pull request
-is still needed to validate it on a GitHub-hosted runner.
+the job.
 
 ## Debug artifacts after a failure
 
@@ -65,6 +64,9 @@ Successful tests do not write these files. Open a saved trace with:
   states from predictable mocked responses without a real network request.
 - These network mocks do not prove that a real backend is available, that its
   response contract is correct, or that authentication works.
+- The localhost integration test loads a page over HTTP, sends a real browser
+  `POST /users`, and reads the stored user with `GET /users/1`. Its server is a
+  temporary in-memory fake, so it does not prove a deployed backend works.
 - `context.storage_state(...)` demonstrates restoring a fake localStorage token
   into a new BrowserContext for local UI tests. It does not perform a real login
   or validate a real token. Real storage-state files can contain sensitive data,

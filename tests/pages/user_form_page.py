@@ -44,6 +44,9 @@ class UserFormPage:
     def open(self):
         self.page.set_content(USER_FORM_HTML)
 
+    def open_from_url(self, url):
+        self.page.goto(url)
+
     def submit(self, name, email):
         self.name_input.fill(name)
         self.email_input.fill(email)
