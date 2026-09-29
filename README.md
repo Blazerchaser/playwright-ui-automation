@@ -41,6 +41,30 @@ Chrome DevTools MCP to inspect a page served only on
 `http://127.0.0.1:<port>`. Keep inspection on local test pages; the MCP server
 does not need access to external sites for these lessons.
 
+## Manual Network-tab practice in your own Chrome
+
+From this repository, start the demo in a terminal and leave that terminal
+running while you inspect the page:
+
+```powershell
+.\.venv\Scripts\python.exe local_demo_server.py --port 8765
+```
+
+Open `http://127.0.0.1:8765/` in your regular Chrome. Open DevTools (F12),
+select **Network** and **Fetch/XHR**, then enter a name and an email address
+and click **Submit**. Select `POST /users` to inspect the JSON request payload,
+the `201` response, and the returned user ID. The page should show
+`Created user: <name>`. Keep DevTools open and submit again to see another
+request. Press **Ctrl+C** in the server terminal to stop it. If port 8765 is
+busy, choose another with `--port` and use the URL printed by the server.
+
+The server listens only on `127.0.0.1`; users are held only in memory and are
+discarded on stop. Use made-up details, not real personal data. Pytest starts
+the same app only for the duration of its integration test, so its temporary
+URL is not suitable for this manual exercise. The Chrome DevTools MCP setting
+above opens a separate isolated Chrome; it cannot see the Network tab of your
+regular Chrome or Playwright's browser unless it performs the scenario itself.
+
 ## Run the tests
 
 ```powershell
