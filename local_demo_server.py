@@ -35,10 +35,17 @@ LOCAL_FORM_HTML = """<!doctype html>
               email: document.querySelector("#email").value
             })
           });
-          if (!response.ok) throw new Error(`HTTP ${response.status}`);
           const user = await response.json();
+          if (response.status === 409) {
+            status.setAttribute("role", "alert");
+            status.textContent = user.error;
+            return;
+          }
+          if (!response.ok) throw new Error(`HTTP ${response.status}`);
+          status.setAttribute("role", "status");
           status.textContent = `Created user: ${user.name}`;
         } catch (error) {
+          status.setAttribute("role", "alert");
           status.textContent = `Request failed: ${error.message}`;
         }
       });
@@ -48,9 +55,11 @@ LOCAL_FORM_HTML = """<!doctype html>
 """
 
 
-def create_server(port=8765):
+def create_server(port=8765, simulate_no_save=False):
     """Bind only to localhost; user records disappear when this server exits."""
     users = {}
+    emails = set()
+    fault_pending = simulate_no_save
 
     class DemoHandler(BaseHTTPRequestHandler):
         def _send(self, status, body, content_type="application/json"):
@@ -75,6 +84,7 @@ def create_server(port=8765):
             self._send(404, b'{}')
 
         def do_POST(self):
+            nonlocal fault_pending
             if self.path != "/users":
                 self._send(404, b'{}')
                 return
@@ -87,12 +97,26 @@ def create_server(port=8765):
                 name, email = data["name"], data["email"]
                 if not isinstance(name, str) or not isinstance(email, str):
                     raise ValueError("Invalid user fields")
+                name, email = name.strip(), email.strip()
+                if not name or not email:
+                    raise ValueError("Empty user fields")
             except (ValueError, KeyError, TypeError):
                 self._send(400, b'{"error":"Invalid user"}')
                 return
 
+            email_key = email.casefold()
+            if email_key in emails:
+                self._send(409, b'{"error":"Email already exists."}')
+                return
+
             user = {"id": len(users) + 1, "name": name, "email": email}
+            if fault_pending:
+                fault_pending = False
+                self._send(201, json.dumps(user).encode("utf-8"))
+                return
+
             users[str(user["id"])] = user
+            emails.add(email_key)
             self._send(201, json.dumps(user).encode("utf-8"))
 
     return HTTPServer(("127.0.0.1", port), DemoHandler)
@@ -101,11 +125,14 @@ def create_server(port=8765):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--port", type=int, default=8765, help="localhost port (default: 8765)")
+    parser.add_argument(
+        "--simulate-no-save", action="store_true", help="enable a one-shot training fault"
+    )
     args = parser.parse_args()
     if not 0 <= args.port <= 65535:
         parser.error("--port must be between 0 and 65535")
 
-    with create_server(args.port) as server:
+    with create_server(args.port, simulate_no_save=args.simulate_no_save) as server:
         print(f"Open http://127.0.0.1:{server.server_port}/ in your own Chrome.", flush=True)
         print("Press Ctrl+C in this terminal to stop the demo.", flush=True)
         try:
